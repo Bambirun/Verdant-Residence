@@ -16,8 +16,8 @@
             margin-bottom: 20px;
         }
         header img {
-            max-width: 150px; /* Ajuste la taille maximale du logo */
-            height: auto; /* Garde les proportions */
+            max-width: 150px;
+            height: auto;
         }
         h1 {
             text-align: center;
@@ -35,7 +35,7 @@
             margin-right: 10px;
         }
         .input-container input[type="range"] {
-            width: 100px; /* Taille des curseurs réduite de moitié */
+            width: 100px;
             margin-right: 10px;
         }
         .input-container input[type="number"] {
@@ -63,49 +63,40 @@
         <div class="input-container">
             <label>Valeur du bien (THB):</label>
             <input type="number" id="valeurBienNumber" value="7400000" min="0" oninput="updateCalculations()">
-            <span id="valeurBienValue">7,400,000</span>
         </div>
         <div class="input-container">
             <label>Taux d'occupation (%):</label>
             <input type="range" id="tauxOccupationRange" min="0" max="100" value="65" oninput="updateFromRange('tauxOccupation')">
             <input type="number" id="tauxOccupationNumber" value="65" min="0" max="100" oninput="updateFromNumber('tauxOccupation')">
-            <span id="tauxOccupationValue">65</span>
         </div>
         <div class="input-container">
             <label>Coût par nuitée (THB):</label>
             <input type="number" id="coutNuiteeNumber" value="7000" min="0" oninput="updateCalculations()">
-            <span id="coutNuiteeValue">7,000</span>
         </div>
         <div class="input-container">
             <label>Entretien (THB):</label>
             <input type="number" id="entretienNumber" value="6000" min="0" oninput="updateCalculations()">
-            <span id="entretienValue">6,000</span>
         </div>
         <div class="input-container">
             <label>Avocat (THB):</label>
             <input type="number" id="avocatNumber" value="1333" min="0" oninput="updateCalculations()">
-            <span id="avocatValue">1,333</span>
         </div>
         <div class="input-container">
             <label>Lease (THB):</label>
             <input type="number" id="leaseNumber" value="78276" min="0" oninput="updateCalculations()">
-            <span id="leaseValue">78,276</span>
         </div>
         <div class="input-container">
             <label>Assurance (THB):</label>
             <input type="number" id="assuranceNumber" value="9600" min="0" oninput="updateCalculations()">
-            <span id="assuranceValue">9,600</span>
         </div>
         <div class="input-container">
             <label>Frais de gestion (%):</label>
             <input type="range" id="fraisGestionRange" min="0" max="50" value="20" oninput="updateFromRange('fraisGestion')">
             <input type="number" id="fraisGestionNumber" value="20" min="0" max="50" oninput="updateFromNumber('fraisGestion')">
-            <span id="fraisGestionValue">20</span>
         </div>
         <div class="input-container">
             <label>Laundry (THB):</label>
             <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
-            <span id="laundryValue">18,000</span>
         </div>
     </div>
 
@@ -122,11 +113,9 @@
         function updateFromRange(variable) {
             const range = document.getElementById(`${variable}Range`);
             const number = document.getElementById(`${variable}Number`);
-            const valueDisplay = document.getElementById(`${variable}Value`);
 
             // Synchroniser le champ numérique avec le curseur
             number.value = range.value;
-            valueDisplay.textContent = parseFloat(range.value).toLocaleString();
 
             // Mettre à jour les calculs
             updateCalculations();
@@ -135,7 +124,6 @@
         function updateFromNumber(variable) {
             const range = document.getElementById(`${variable}Range`);
             const number = document.getElementById(`${variable}Number`);
-            const valueDisplay = document.getElementById(`${variable}Value`);
 
             // Récupérer la valeur saisie
             let value = parseFloat(number.value);
@@ -151,7 +139,6 @@
 
             // Synchroniser le curseur avec la valeur validée
             range.value = value;
-            valueDisplay.textContent = value.toLocaleString();
 
             // Mettre à jour les calculs
             updateCalculations();
@@ -168,17 +155,6 @@
             const assurance = parseFloat(document.getElementById('assuranceNumber').value) || 0;
             const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
-
-            // Mettre à jour les affichages des valeurs
-            document.getElementById('valeurBienValue').textContent = valeurBien.toLocaleString();
-            document.getElementById('tauxOccupationValue').textContent = tauxOccupation;
-            document.getElementById('coutNuiteeValue').textContent = coutNuitee.toLocaleString();
-            document.getElementById('entretienValue').textContent = entretien.toLocaleString();
-            document.getElementById('avocatValue').textContent = avocat.toLocaleString();
-            document.getElementById('leaseValue').textContent = lease.toLocaleString();
-            document.getElementById('assuranceValue').textContent = assurance.toLocaleString();
-            document.getElementById('fraisGestionValue').textContent = fraisGestion;
-            document.getElementById('laundryValue').textContent = laundry.toLocaleString();
 
             // Calculer les jours occupés (365 jours * taux d'occupation)
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
