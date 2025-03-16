@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcul de Rentabilité</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header img {
+            max-width: 150px; /* Ajuste la taille maximale du logo */
+            height: auto; /* Garde les proportions */
+        }
+        h1 {
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .input-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .input-container label {
+            width: 250px;
+            margin-right: 10px;
+        }
+        .input-container input[type="range"] {
+            width: 100px; /* Taille des curseurs réduite de moitié */
+            margin-right: 10px;
+        }
+        .input-container input[type="number"] {
+            width: 80px;
+            margin-right: 10px;
+        }
+        .results {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .results p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="logo verdant.png" alt="Logo Verdant">
+    </header>
+    <h1>Calcul de Rentabilité</h1>
+
+    <div class="section">
+        <h2>Variables</h2>
+        <div class="input-container">
+            <label>Valeur du bien (THB):</label>
+            <input type="number" id="valeurBienNumber" value="7400000" min="0" oninput="updateCalculations()">
+            <span id="valeurBienValue">7,400,000</span>
+        </div>
+        <div class="input-container">
+            <label>Taux d'occupation (%):</label>
+            <input type="range" id="tauxOccupationRange" min="0" max="100" value="65" oninput="updateFromRange('tauxOccupation')">
+            <input type="number" id="tauxOccupationNumber" value="65" min="0" max="100" oninput="updateFromNumber('tauxOccupation')">
+            <span id="tauxOccupationValue">65</span>
+        </div>
+        <div class="input-container">
+            <label>Coût par nuitée (THB):</label>
+            <input type="number" id="coutNuiteeNumber" value="7000" min="0" oninput="updateCalculations()">
+            <span id="coutNuiteeValue">7,000</span>
+        </div>
+        <div class="input-container">
+            <label>Entretien (THB):</label>
+            <input type="number" id="entretienNumber" value="6000" min="0" oninput="updateCalculations()">
+            <span id="entretienValue">6,000</span>
+        </div>
+        <div class="input-container">
+            <label>Avocat (THB):</label>
+            <input type="number" id="avocatNumber" value="1333" min="0" oninput="updateCalculations()">
+            <span id="avocatValue">1,333</span>
+        </div>
+        <div class="input-container">
+            <label>Lease (THB):</label>
+            <input type="number" id="leaseNumber" value="78276" min="0" oninput="updateCalculations()">
+            <span id="leaseValue">78,276</span>
+        </div>
+        <div class="input-container">
+            <label>Assurance (THB):</label>
+            <input type="number" id="assuranceNumber" value="9600" min="0" oninput="updateCalculations()">
+            <span id="assuranceValue">9,600</span>
+        </div>
+        <div class="input-container">
+            <label>Frais de gestion (%):</label>
+            <input type="range" id="fraisGestionRange" min="0" max="50" value="20" oninput="updateFromRange('fraisGestion')">
+            <input type="number" id="fraisGestionNumber" value="20" min="0" max="50" oninput="updateFromNumber('fraisGestion')">
+            <span id="fraisGestionValue">20</span>
+        </div>
+        <div class="input-container">
+            <label>Laundry (THB):</label>
+            <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
+            <span id="laundryValue">18,000</span>
+        </div>
+    </div>
+
+    <div class="section results">
+        <h2>Résultats</h2>
+        <p>Jours occupés: <span id="joursOccupes">2375</span></p>
+        <p>Revenu brut annuel (THB): <span id="revenuBrut">16,607,500</span></p>
+        <p>Total des frais annuels (THB): <span id="totalFrais">499,359</span></p>
+        <p>Revenu net annuel (THB): <span id="revenuNet">1,161,391</span></p>
+        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">15.7</span></strong></p>
+    </div>
+
+    <script>
+        function updateFromRange(variable) {
+            const range = document.getElementById(`${variable}Range`);
+            const number = document.getElementById(`${variable}Number`);
+            const valueDisplay = document.getElementById(`${variable}Value`);
+
+            // Synchroniser le champ numérique avec le curseur
+            number.value = range.value;
+            valueDisplay.textContent = parseFloat(range.value).toLocaleString();
+
+            // Mettre à jour les calculs
+            updateCalculations();
+        }
+
+        function updateFromNumber(variable) {
+            const range = document.getElementById(`${variable}Range`);
+            const number = document.getElementById(`${variable}Number`);
+            const valueDisplay = document.getElementById(`${variable}Value`);
+
+            // Récupérer la valeur saisie
+            let value = parseFloat(number.value);
+
+            // Vérifier si la valeur est valide
+            if (isNaN(value) || value < parseFloat(range.min)) {
+                value = parseFloat(range.min); // Si invalide ou négative, ramener à la valeur minimale
+                number.value = value;
+            } else if (value > parseFloat(range.max)) {
+                value = parseFloat(range.max); // Si hors limite max, ramener à la valeur maximale
+                number.value = value;
+            }
+
+            // Synchroniser le curseur avec la valeur validée
+            range.value = value;
+            valueDisplay.textContent = value.toLocaleString();
+
+            // Mettre à jour les calculs
+            updateCalculations();
+        }
+
+        function updateCalculations() {
+            // Récupérer les valeurs des champs numériques
+            const valeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
+            const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
+            const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
+            const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
+            const avocat = parseFloat(document.getElementById('avocatNumber').value) || 0;
+            const lease = parseFloat(document.getElementById('leaseNumber').value) || 0;
+            const assurance = parseFloat(document.getElementById('assuranceNumber').value) || 0;
+            const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
+            const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
+
+            // Mettre à jour les affichages des valeurs
+            document.getElementById('valeurBienValue').textContent = valeurBien.toLocaleString();
+            document.getElementById('tauxOccupationValue').textContent = tauxOccupation;
+            document.getElementById('coutNuiteeValue').textContent = coutNuitee.toLocaleString();
+            document.getElementById('entretienValue').textContent = entretien.toLocaleString();
+            document.getElementById('avocatValue').textContent = avocat.toLocaleString();
+            document.getElementById('leaseValue').textContent = lease.toLocaleString();
+            document.getElementById('assuranceValue').textContent = assurance.toLocaleString();
+            document.getElementById('fraisGestionValue').textContent = fraisGestion;
+            document.getElementById('laundryValue').textContent = laundry.toLocaleString();
+
+            // Calculer les jours occupés (365 jours * taux d'occupation)
+            const joursOccupes = Math.round(365 * (tauxOccupation / 100));
+            document.getElementById('joursOccupes').textContent = joursOccupes;
+
+            // Calculer le revenu brut annuel
+            const revenuBrut = joursOccupes * coutNuitee;
+            document.getElementById('revenuBrut').textContent = revenuBrut.toLocaleString();
+
+            // Calculer les frais de gestion (en % du revenu brut)
+            const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
+
+            // Calculer le total des frais annuels
+            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry;
+            document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
+
+            // Calculer le revenu net annuel
+            const revenuNet = revenuBrut - totalFrais;
+            document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
+
+            // Calculer le taux de rentabilité
+            const tauxRentabilite = valeurBien > 0 ? (revenuNet / valeurBien) * 100 : 0;
+            document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
+        }
+
+        // Appeler la fonction une première fois pour initialiser les résultats
+        updateCalculations();
+    </script>
+</body>
+</html>
