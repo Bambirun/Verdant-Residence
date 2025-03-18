@@ -98,6 +98,15 @@
             <label>Laundry (THB):</label>
             <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
         </div>
+        <div class="input-container">
+            <label>TVA (%):</label>
+            <input type="range" id="tvaRange" min="0" max="20" value="7" oninput="updateFromRange('tva')">
+            <input type="number" id="tvaNumber" value="7" min="0" max="20" oninput="updateFromNumber('tva')">
+        </div>
+        <div class="input-container">
+            <label>Meublé:</label>
+            <input type="checkbox" id="meubleCheckbox" checked onchange="updateCalculations()">
+        </div>
     </div>
 
     <div class="section results">
@@ -155,17 +164,21 @@
             const assurance = parseFloat(document.getElementById('assuranceNumber').value) || 0;
             const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
+            const tva = parseFloat(document.getElementById('tvaNumber').value) || 0;
+            const meuble = document.getElementById('meubleCheckbox').checked;
 
             // Calculer les jours occupés (365 jours * taux d'occupation)
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
             document.getElementById('joursOccupes').textContent = joursOccupes;
 
-            // Calculer le revenu brut annuel
-            const revenuBrut = joursOccupes * coutNuitee;
-            document.getElementById('revenuBrut').textContent = revenuBrut.toLocaleString();
+            // Calculer le revenu brut annuel hors TVA
+            const revenuBrutHorsTva = joursOccupes * coutNuitee;
+            // Ajouter la TVA au revenu brut
+            const revenuBrut = revenuBrutHorsTva * (1 + tva / 100);
+            document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
 
-            // Calculer les frais de gestion (en % du revenu brut)
-            const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
+            // Calculer les frais de gestion (en % du revenu brut hors TVA)
+            const fraisGestionValeur = (fraisGestion / 100) * revenuBrutHorsTva;
 
             // Calculer le total des frais annuels
             const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry;
