@@ -42,10 +42,6 @@
             width: 80px;
             margin-right: 10px;
         }
-        .input-container input[readonly] {
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-        }
         .results {
             background-color: #f0f0f0;
             padding: 15px;
@@ -66,13 +62,13 @@
         <h2>Variables</h2>
         <div class="input-container">
             <label>Valeur du bien (THB):</label>
-            <input type="number" id="valeurBienNumber" value="7400000" min="0" oninput="updateCalculations()">
+            <input type="number" id="valeurBienNumber" min="0" oninput="updateCalculations()">
             <input type="checkbox" id="meubleCheckbox" onchange="toggleFurniture()">
             <label for="meubleCheckbox">Meublé</label>
         </div>
         <div class="input-container">
             <label>TVA (7%) (THB):</label>
-            <input type="number" id="tvaValeur" value="518000" readonly>
+            <input type="number" id="tvaValeur" readonly>
         </div>
         <div class="input-container">
             <label>Taux d'occupation (%):</label>
@@ -116,11 +112,11 @@
         <p>Revenu brut annuel (THB): <span id="revenuBrut">16607500</span></p>
         <p>Total des frais annuels (THB): <span id="totalFrais">499359</span></p>
         <p>Revenu net annuel (THB): <span id="revenuNet">1161391</span></p>
-        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">15.7</span></strong></p>
+        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">0</span></strong></p>
     </div>
 
     <script>
-        let baseValeurBien = 7400000; // Stocker la valeur de base
+        let baseValeurBien = 0; // Valeur de base initiale à 0
 
         function updateFromRange(variable) {
             const range = document.getElementById(`${variable}Range`);
@@ -149,22 +145,23 @@
             const meubleCheckbox = document.getElementById('meubleCheckbox');
             const currentValue = parseFloat(valeurBienInput.value) || 0;
 
-            if (meubleCheckbox.checked) {
-                // Stocker la valeur de base si pas encore fait, puis augmenter
-                if (currentValue === baseValeurBien) {
+            if (valeurBienInput.value !== "") {
+                if (meubleCheckbox.checked) {
+                    // Stocker la valeur de base et ajouter 1 million
                     baseValeurBien = currentValue;
+                    valeurBienInput.value = baseValeurBien + 1000000;
+                } else {
+                    // Revenir à la valeur de base
+                    valeurBienInput.value = baseValeurBien;
                 }
-                valeurBienInput.value = baseValeurBien + 1000000;
-            } else {
-                // Revenir à la valeur de base
-                valeurBienInput.value = baseValeurBien;
             }
             updateCalculations();
         }
 
         function updateCalculations() {
             // Récupérer les valeurs des champs numériques
-            const valeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
+            const valeurBienInput = document.getElementById('valeurBienNumber');
+            const valeurBien = parseFloat(valeurBienInput.value) || 0;
             const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
             const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
             const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
@@ -176,11 +173,11 @@
             const meuble = document.getElementById('meubleCheckbox').checked;
 
             // Calculer la valeur de base (sans le million supplémentaire)
-            const baseValeurBienCalc = meuble ? valeurBien - 1000000 : valeurBien;
+            const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBien - 1000000 : valeurBien;
 
             // Calculer la TVA (7% du prix de base uniquement)
-            const tvaValeur = baseValeurBienCalc * 0.07;
-            document.getElementById('tvaValeur').value = Math.round(tvaValeur);
+            const tvaValeur = valeurBienInput.value === "" ? "" : Math.round(baseValeurBienCalc * 0.07);
+            document.getElementById('tvaValeur').value = tvaValeur;
 
             // Calculer les jours occupés
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
