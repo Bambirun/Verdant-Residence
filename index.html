@@ -42,6 +42,15 @@
             width: 80px;
             margin-right: 10px;
         }
+        /* Masquer les flèches d'incrémentation/décrémentation */
+        .input-container input[type="number"]::-webkit-inner-spin-button,
+        .input-container input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .input-container input[type="number"] {
+            -moz-appearance: textfield; /* Pour Firefox */
+        }
         .results {
             background-color: #f0f0f0;
             padding: 15px;
@@ -117,6 +126,13 @@
 
     <script>
         let baseValeurBien = 0; // Valeur de base initiale à 0
+
+        // Réinitialiser la valeur du bien à 0 au chargement de la page
+        window.onload = function() {
+            document.getElementById('valeurBienNumber').value = "";
+            document.getElementById('meubleCheckbox').checked = false;
+            updateCalculations();
+        };
 
         function updateFromRange(variable) {
             const range = document.getElementById(`${variable}Range`);
