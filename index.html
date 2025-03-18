@@ -63,8 +63,7 @@
         <div class="input-container">
             <label>Valeur du bien (THB):</label>
             <input type="number" id="valeurBienNumber" value="7400000" min="0" oninput="updateCalculations()">
-            <input type="checkbox" id="meubleCheckbox" onchange="updateCalculations()">
-            <label for="meubleCheckbox">Meublé (+1M THB)</label>
+            <input type="checkbox" id="meubleCheckbox" onchange="updateCalculations()"> Meublé
         </div>
         <div class="input-container">
             <label>TVA (7%) (THB):</label>
@@ -108,11 +107,11 @@
 
     <div class="section results">
         <h2>Résultats</h2>
-        <p>Jours occupés: <span id="joursOccupes">2375</span></p>
-        <p>Revenu brut annuel (THB): <span id="revenuBrut">16,607,500</span></p>
-        <p>Total des frais annuels (THB): <span id="totalFrais">499,359</span></p>
-        <p>Revenu net annuel (THB): <span id="revenuNet">1,161,391</span></p>
-        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">15.7</span></strong></p>
+        <p>Jours occupés: <span id="joursOccupes">237</span></p>
+        <p>Revenu brut annuel (THB): <span id="revenuBrut">1,659,000</span></p>
+        <p>Total des frais annuels (THB): <span id="totalFrais">331,459</span></p>
+        <p>Revenu net annuel (THB): <span id="revenuNet">1,327,541</span></p>
+        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">16.7</span></strong></p>
     </div>
 
     <script>
@@ -140,7 +139,7 @@
 
         function updateCalculations() {
             // Récupérer les valeurs des champs numériques
-            const baseValeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
+            let baseValeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
             const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
             const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
             const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
@@ -151,10 +150,13 @@
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
             const meuble = document.getElementById('meubleCheckbox').checked;
 
-            // Calculer le prix effectif du bien
-            const valeurBien = meuble ? baseValeurBien + 1000000 : baseValeurBien;
-            
-            // Calculer la TVA (7% du prix de base uniquement)
+            // Ajuster la valeur du bien si meublé
+            if (meuble) {
+                baseValeurBien += 1000000;
+                document.getElementById('valeurBienNumber').value = baseValeurBien;
+            }
+
+            // Calculer la TVA (7% du prix de base)
             const tvaValeur = baseValeurBien * 0.07;
             document.getElementById('tvaValeur').textContent = Math.round(tvaValeur).toLocaleString();
 
@@ -177,8 +179,9 @@
             const revenuNet = revenuBrut - totalFrais;
             document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
 
-            // Calculer le taux de rentabilité basé sur la valeur totale du bien (incluant meublé si applicable)
-            const tauxRentabilite = valeurBien > 0 ? (revenuNet / valeurBien) * 100 : 0;
+            // Calculer le taux de rentabilité : ROUND(revenuNet * 100 / (valeurBien + tvaValeur), 1)
+            const tauxRentabilite = (baseValeurBien + tvaValeur) > 0 ? 
+                Math.round((revenuNet * 100 / (baseValeurBien + tvaValeur)) * 10) / 10 : 0;
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
         }
 
