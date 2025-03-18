@@ -63,6 +63,12 @@
         <div class="input-container">
             <label>Valeur du bien (THB):</label>
             <input type="number" id="valeurBienNumber" value="7400000" min="0" oninput="updateCalculations()">
+            <input type="checkbox" id="meubleCheckbox" onchange="updateCalculations()">
+            <label for="meubleCheckbox">Meublé (+1M THB)</label>
+        </div>
+        <div class="input-container">
+            <label>TVA (7%) (THB):</label>
+            <span id="tvaValeur">518000</span>
         </div>
         <div class="input-container">
             <label>Taux d'occupation (%):</label>
@@ -98,15 +104,6 @@
             <label>Laundry (THB):</label>
             <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
         </div>
-        <div class="input-container">
-            <label>TVA (%):</label>
-            <input type="range" id="tvaRange" min="0" max="20" value="7" oninput="updateFromRange('tva')">
-            <input type="number" id="tvaNumber" value="7" min="0" max="20" oninput="updateFromNumber('tva')">
-        </div>
-        <div class="input-container">
-            <label>Meublé:</label>
-            <input type="checkbox" id="meubleCheckbox" checked onchange="updateCalculations()">
-        </div>
     </div>
 
     <div class="section results">
@@ -122,40 +119,28 @@
         function updateFromRange(variable) {
             const range = document.getElementById(`${variable}Range`);
             const number = document.getElementById(`${variable}Number`);
-
-            // Synchroniser le champ numérique avec le curseur
             number.value = range.value;
-
-            // Mettre à jour les calculs
             updateCalculations();
         }
 
         function updateFromNumber(variable) {
             const range = document.getElementById(`${variable}Range`);
             const number = document.getElementById(`${variable}Number`);
-
-            // Récupérer la valeur saisie
             let value = parseFloat(number.value);
-
-            // Vérifier si la valeur est valide
             if (isNaN(value) || value < parseFloat(range.min)) {
-                value = parseFloat(range.min); // Si invalide ou négative, ramener à la valeur minimale
+                value = parseFloat(range.min);
                 number.value = value;
             } else if (value > parseFloat(range.max)) {
-                value = parseFloat(range.max); // Si hors limite max, ramener à la valeur maximale
+                value = parseFloat(range.max);
                 number.value = value;
             }
-
-            // Synchroniser le curseur avec la valeur validée
             range.value = value;
-
-            // Mettre à jour les calculs
             updateCalculations();
         }
 
         function updateCalculations() {
             // Récupérer les valeurs des champs numériques
-            const valeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
+            const baseValeurBien = parseFloat(document.getElementById('valeurBienNumber').value) || 0;
             const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
             const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
             const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
@@ -164,21 +149,25 @@
             const assurance = parseFloat(document.getElementById('assuranceNumber').value) || 0;
             const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
-            const tva = parseFloat(document.getElementById('tvaNumber').value) || 0;
             const meuble = document.getElementById('meubleCheckbox').checked;
 
-            // Calculer les jours occupés (365 jours * taux d'occupation)
+            // Calculer le prix effectif du bien
+            const valeurBien = meuble ? baseValeurBien + 1000000 : baseValeurBien;
+            
+            // Calculer la TVA (7% du prix de base uniquement)
+            const tvaValeur = baseValeurBien * 0.07;
+            document.getElementById('tvaValeur').textContent = Math.round(tvaValeur).toLocaleString();
+
+            // Calculer les jours occupés
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
             document.getElementById('joursOccupes').textContent = joursOccupes;
 
-            // Calculer le revenu brut annuel hors TVA
-            const revenuBrutHorsTva = joursOccupes * coutNuitee;
-            // Ajouter la TVA au revenu brut
-            const revenuBrut = revenuBrutHorsTva * (1 + tva / 100);
+            // Calculer le revenu brut annuel
+            const revenuBrut = joursOccupes * coutNuitee;
             document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
 
-            // Calculer les frais de gestion (en % du revenu brut hors TVA)
-            const fraisGestionValeur = (fraisGestion / 100) * revenuBrutHorsTva;
+            // Calculer les frais de gestion
+            const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
 
             // Calculer le total des frais annuels
             const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry;
@@ -188,12 +177,12 @@
             const revenuNet = revenuBrut - totalFrais;
             document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
 
-            // Calculer le taux de rentabilité
+            // Calculer le taux de rentabilité basé sur la valeur totale du bien (incluant meublé si applicable)
             const tauxRentabilite = valeurBien > 0 ? (revenuNet / valeurBien) * 100 : 0;
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
         }
 
-        // Appeler la fonction une première fois pour initialiser les résultats
+        // Initialiser les calculs
         updateCalculations();
     </script>
 </body>
