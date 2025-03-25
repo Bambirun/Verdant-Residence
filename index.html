@@ -42,14 +42,13 @@
             width: 80px;
             margin-right: 10px;
         }
-        /* Masquer les flèches d'incrémentation/décrémentation */
         .input-container input[type="number"]::-webkit-inner-spin-button,
         .input-container input[type="number"]::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
         .input-container input[type="number"] {
-            -moz-appearance: textfield; /* Pour Firefox */
+            -moz-appearance: textfield;
         }
         .results {
             background-color: #f0f0f0;
@@ -77,6 +76,7 @@
         </div>
         <div class="input-container">
             <label>TVA (7%) (THB):</label>
+            <input type="checkbox" id="tvaCheckbox" onchange="updateCalculations()">
             <input type="number" id="tvaValeur" readonly>
         </div>
         <div class="input-container">
@@ -125,12 +125,12 @@
     </div>
 
     <script>
-        let baseValeurBien = 0; // Valeur de base initiale à 0
+        let baseValeurBien = 0;
 
-        // Réinitialiser la valeur du bien à 0 au chargement de la page
         window.onload = function() {
             document.getElementById('valeurBienNumber').value = "";
             document.getElementById('meubleCheckbox').checked = false;
+            document.getElementById('tvaCheckbox').checked = false;
             updateCalculations();
         };
 
@@ -163,11 +163,9 @@
 
             if (valeurBienInput.value !== "") {
                 if (meubleCheckbox.checked) {
-                    // Stocker la valeur de base et ajouter 1 million
                     baseValeurBien = currentValue;
                     valeurBienInput.value = baseValeurBien + 1000000;
                 } else {
-                    // Revenir à la valeur de base
                     valeurBienInput.value = baseValeurBien;
                 }
             }
@@ -175,7 +173,6 @@
         }
 
         function updateCalculations() {
-            // Récupérer les valeurs des champs numériques
             const valeurBienInput = document.getElementById('valeurBienNumber');
             const valeurBien = parseFloat(valeurBienInput.value) || 0;
             const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
@@ -187,39 +184,33 @@
             const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
             const meuble = document.getElementById('meubleCheckbox').checked;
+            const tvaCheckbox = document.getElementById('tvaCheckbox').checked;
 
-            // Calculer la valeur de base (sans le million supplémentaire)
             const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBien - 1000000 : valeurBien;
 
-            // Calculer la TVA (7% du prix de base uniquement)
-            const tvaValeur = valeurBienInput.value === "" ? "" : Math.round(baseValeurBienCalc * 0.07);
+            // Calculer et afficher la TVA uniquement si la checkbox est cochée
+            const tvaValeur = tvaCheckbox && valeurBienInput.value !== "" ? Math.round(baseValeurBienCalc * 0.07) : "";
             document.getElementById('tvaValeur').value = tvaValeur;
 
-            // Calculer les jours occupés
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
             document.getElementById('joursOccupes').textContent = joursOccupes;
 
-            // Calculer le revenu brut annuel
             const revenuBrut = joursOccupes * coutNuitee;
             document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
 
-            // Calculer les frais de gestion
             const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
 
-            // Calculer le total des frais annuels
-            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry;
+            // Inclure la TVA dans les frais totaux si cochée
+            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + (tvaCheckbox ? (tvaValeur || 0) : 0);
             document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
 
-            // Calculer le revenu net annuel
             const revenuNet = revenuBrut - totalFrais;
             document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
 
-            // Calculer le taux de rentabilité basé sur la valeur totale du bien
             const tauxRentabilite = valeurBien > 0 ? (revenuNet / valeurBien) * 100 : 0;
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
         }
 
-        // Initialiser les calculs
         updateCalculations();
     </script>
 </body>
