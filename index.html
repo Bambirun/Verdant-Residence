@@ -180,7 +180,7 @@
 
         function updateCalculations() {
             const valeurBienInput = document.getElementById('valeurBienNumber');
-            const valeurBien = parseFloat(valeurBienInput.value) || 0;
+            const valeurBienBase = parseFloat(valeurBienInput.value) || 0;
             const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
             const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
             const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
@@ -193,34 +193,42 @@
             const tvaCheckbox = document.getElementById('tvaCheckbox').checked;
             const provisionTravauxCheckbox = document.getElementById('provisionTravauxCheckbox').checked;
 
-            const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBien - 1000000 : valeurBien;
+            // Calculer la valeur de base sans les meubles
+            const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBienBase - 1000000 : valeurBienBase;
 
-            // Calculer et afficher la TVA uniquement si la checkbox est cochée
-            const tvaValeur = tvaCheckbox && valeurBienInput.value !== "" ? Math.round(baseValeurBienCalc * 0.07) : "";
-            document.getElementById('tvaValeur').value = tvaValeur;
+            // Calculer la TVA si cochée
+            const tvaValeur = tvaCheckbox && valeurBienInput.value !== "" ? Math.round(baseValeurBienCalc * 0.07) : 0;
+            document.getElementById('tvaValeur').value = tvaValeur || "";
 
+            // Ajuster la valeur du bien pour inclure TVA et meublé si applicable
+            const valeurBienAjustee = baseValeurBienCalc + (tvaCheckbox ? tvaValeur : 0) + (meuble ? 1000000 : 0);
+
+            // Jours occupés
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
             document.getElementById('joursOccupes').textContent = joursOccupes;
 
+            // Revenu brut
             const revenuBrut = joursOccupes * coutNuitee;
             document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
 
+            // Frais de gestion
             const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
-            
-            // Calculer la provision pour travaux (1% du revenu brut) si la checkbox est cochée
+
+            // Provision pour travaux
             const provisionTravaux = provisionTravauxCheckbox ? revenuBrut * 0.01 : 0;
             document.getElementById('provisionTravauxValeur').value = provisionTravauxCheckbox ? Math.round(provisionTravaux) : "";
 
-            // Inclure la TVA et la provision dans les frais totaux si cochés
+            // Total des frais annuels (TVA exclue)
             const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + 
-                             (tvaCheckbox ? (tvaValeur || 0) : 0) + 
-                             (provisionTravauxCheckbox ? provisionTravaux : 0);
+                              (provisionTravauxCheckbox ? provisionTravaux : 0);
             document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
 
+            // Revenu net
             const revenuNet = revenuBrut - totalFrais;
             document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
 
-            const tauxRentabilite = valeurBien > 0 ? (revenuNet / valeurBien) * 100 : 0;
+            // Taux de rentabilité basé sur la valeur ajustée
+            const tauxRentabilite = valeurBienAjustee > 0 ? (revenuNet / valeurBienAjustee) * 100 : 0;
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
         }
 
