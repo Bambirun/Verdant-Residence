@@ -113,6 +113,11 @@
             <label>Laundry (THB):</label>
             <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
         </div>
+        <div class="input-container">
+            <label>Provision pour travaux d'entretien (1% revenu brut):</label>
+            <input type="checkbox" id="provisionTravauxCheckbox" onchange="updateCalculations()">
+            <input type="number" id="provisionTravauxValeur" readonly>
+        </div>
     </div>
 
     <div class="section results">
@@ -131,6 +136,7 @@
             document.getElementById('valeurBienNumber').value = "";
             document.getElementById('meubleCheckbox').checked = false;
             document.getElementById('tvaCheckbox').checked = false;
+            document.getElementById('provisionTravauxCheckbox').checked = false;
             updateCalculations();
         };
 
@@ -185,6 +191,7 @@
             const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
             const meuble = document.getElementById('meubleCheckbox').checked;
             const tvaCheckbox = document.getElementById('tvaCheckbox').checked;
+            const provisionTravauxCheckbox = document.getElementById('provisionTravauxCheckbox').checked;
 
             const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBien - 1000000 : valeurBien;
 
@@ -199,9 +206,15 @@
             document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
 
             const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
+            
+            // Calculer la provision pour travaux (1% du revenu brut) si la checkbox est cochée
+            const provisionTravaux = provisionTravauxCheckbox ? revenuBrut * 0.01 : 0;
+            document.getElementById('provisionTravauxValeur').value = provisionTravauxCheckbox ? Math.round(provisionTravaux) : "";
 
-            // Inclure la TVA dans les frais totaux si cochée
-            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + (tvaCheckbox ? (tvaValeur || 0) : 0);
+            // Inclure la TVA et la provision dans les frais totaux si cochés
+            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + 
+                             (tvaCheckbox ? (tvaValeur || 0) : 0) + 
+                             (provisionTravauxCheckbox ? provisionTravaux : 0);
             document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
 
             const revenuNet = revenuBrut - totalFrais;
