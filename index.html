@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcul de Rentabilité</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -245,40 +246,47 @@
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
         }
 
-        function getResultsText() {
-            const joursOccupes = document.getElementById('joursOccupes').textContent;
-            const revenuBrut = document.getElementById('revenuBrut').textContent;
-            const totalFrais = document.getElementById('totalFrais').textContent;
-            const revenuNet = document.getElementById('revenuNet').textContent;
-            const tauxRentabilite = document.getElementById('tauxRentabilite').textContent;
-
-            return `Résultats du Calcul de Rentabilité:
-Jours occupés: ${joursOccupes}
-Revenu brut annuel (THB): ${revenuBrut}
-Total des frais annuels (THB): ${totalFrais}
-Revenu net annuel (THB): ${revenuNet}
-Taux de rentabilité: ${tauxRentabilite}%`;
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            html2canvas(document.body, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                doc.save('rentabilite.pdf');
+            });
         }
 
         function shareWhatsApp() {
-            const text = encodeURIComponent(getResultsText());
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${text}`;
-            window.open(whatsappUrl, '_blank');
-        }
-
-        function generatePDF() {
-            const { jsPDF } = window.jspdf; // Accès correct à jsPDF
+            const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(16);
-            doc.text("Calcul de Rentabilité", 20, 20);
-            doc.setFontSize(12);
-            const resultsText = getResultsText().split('\n');
-            let y = 30;
-            resultsText.forEach(line => {
-                doc.text(line, 20, y);
-                y += 10;
+            html2canvas(document.body, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                
+                // Convertir le PDF en base64
+                const pdfBase64 = doc.output('datauristring');
+                const pdfBlob = doc.output('blob');
+                const file = new File([pdfBlob], 'rentabilite.pdf', { type: 'application/pdf' });
+
+                // Vérifier si l'API Web Share est disponible (mobile principalement)
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: 'Calcul de Rentabilité',
+                        text: 'Voici le calcul de rentabilité en PDF'
+                    }).catch(error => console.log('Erreur de partage:', error));
+                } else {
+                    // Fallback : Télécharger le PDF et informer l'utilisateur
+                    doc.save('rentabilite.pdf');
+                    alert('Le PDF a été téléchargé. Vous pouvez maintenant le partager manuellement via WhatsApp.');
+                }
             });
-            doc.save('rentabilite.pdf');
         }
 
         updateCalculations();
