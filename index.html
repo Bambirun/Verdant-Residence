@@ -79,10 +79,6 @@
         .share-buttons button:hover {
             background-color: #45a049;
         }
-        .whatsapp-icon {
-            width: 20px;
-            height: 20px;
-        }
     </style>
 </head>
 <body>
@@ -153,10 +149,6 @@
         <p>Revenu net annuel (THB): <span id="revenuNet">1161391</span></p>
         <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">0</span></strong></p>
         <div class="share-buttons">
-            <button onclick="shareWhatsApp()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="whatsapp-icon" alt="WhatsApp">
-                Partager via WhatsApp
-            </button>
             <button onclick="generatePDF()">Générer PDF</button>
         </div>
     </div>
@@ -249,33 +241,34 @@
         function capturePageToPDF(callback) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = doc.internal.pageSize.getWidth(); // 210 mm
-            const pdfHeight = doc.internal.pageSize.getHeight(); // 297 mm
-
             html2canvas(document.body, { 
-                scale: 2, // Résolution augmentée
+                scale: 2, // Résolution augmentée pour la clarté
                 useCORS: true,
                 scrollX: 0,
-                scrollY: -window.scrollY
+                scrollY: -window.scrollY // Capture tout, même hors écran
             }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const imgProps = doc.getImageProperties(imgData);
-                const originalWidth = imgProps.width;
-                const originalHeight = imgProps.height;
+                const pdfWidth = doc.internal.pageSize.getWidth(); // 210 mm
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-                // Calculer le facteur d'échelle pour doubler la taille et remplir la page
-                const scaleWidth = pdfWidth / originalWidth * 2; // Doubler la largeur
-                const scaleHeight = pdfHeight / originalHeight * 2; // Doubler la hauteur
-                const scale = Math.max(scaleWidth, scaleHeight); // Prendre le max pour remplir la page
+                // Si la hauteur dépasse une page A4 (297 mm), ajouter des pages
+                if (pdfHeight > 297) {
+                    const ratio = 297 / pdfHeight;
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight * ratio);
+                    let remainingHeight = pdfHeight - 297;
+                    let yOffset = 297;
 
-                const scaledWidth = originalWidth * scale;
-                const scaledHeight = originalHeight * scale;
+                    while (remainingHeight > 0) {
+                        doc.addPage();
+                        doc.addImage(imgData, 'PNG', 0, -yOffset, pdfWidth, pdfHeight);
+                        remainingHeight -= 297;
+                        yOffset += 297;
+                    }
+                } else {
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                }
 
-                // Centrer l'image si elle dépasse les bords
-                const xOffset = (pdfWidth - scaledWidth) / 2;
-                const yOffset = (pdfHeight - scaledHeight) / 2;
-
-                doc.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
                 callback(doc);
             });
         }
@@ -284,46 +277,6 @@
             capturePageToPDF((doc) => {
                 doc.save('rentabilite.pdf');
             });
-        }
-
-        function getAllInfoText() {
-            const inputs = {
-                "Valeur du bien (THB)": document.getElementById('valeurBienNumber').value || "Non défini",
-                "Meublé": document.getElementById('meubleCheckbox').checked ? "Oui" : "Non",
-                "TVA (7%) (THB)": document.getElementById('tvaValeur').value || "0",
-                "Taux d'occupation (%)": document.getElementById('tauxOccupationNumber').value,
-                "Coût par nuitée (THB)": document.getElementById('coutNuiteeNumber').value,
-                "Entretien (THB)": document.getElementById('entretienNumber').value,
-                "Avocat (THB)": document.getElementById('avocatNumber').value,
-                "Lease (THB)": document.getElementById('leaseNumber').value,
-                "Assurance (THB)": document.getElementById('assuranceNumber').value,
-                "Frais de gestion (%)": document.getElementById('fraisGestionNumber').value,
-                "Laundry (THB)": document.getElementById('laundryNumber').value,
-                "Provision pour travaux (THB)": document.getElementById('provisionTravauxValeur').value || "0"
-            };
-            const results = {
-                "Jours occupés": document.getElementById('joursOccupes').textContent,
-                "Revenu brut annuel (THB)": document.getElementById('revenuBrut').textContent,
-                "Total des frais annuels (THB)": document.getElementById('totalFrais').textContent,
-                "Revenu net annuel (THB)": document.getElementById('revenuNet').textContent,
-                "Taux de rentabilité (%)": document.getElementById('tauxRentabilite').textContent
-            };
-
-            let text = "Calcul de Rentabilité\n\nVariables:\n";
-            for (const [key, value] of Object.entries(inputs)) {
-                text += `${key}: ${value}\n`;
-            }
-            text += "\nRésultats:\n";
-            for (const [key, value] of Object.entries(results)) {
-                text += `${key}: ${value}\n`;
-            }
-            return text;
-        }
-
-        function shareWhatsApp() {
-            const text = encodeURIComponent(getAllInfoText());
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${text}`;
-            window.open(whatsappUrl, '_blank');
         }
 
         updateCalculations();
