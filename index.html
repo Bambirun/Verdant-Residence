@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcul de Rentabilité</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -57,6 +58,29 @@
         }
         .results p {
             margin: 5px 0;
+        }
+        .share-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .share-buttons button {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .share-buttons button:hover {
+            background-color: #45a049;
+        }
+        .whatsapp-icon {
+            width: 20px;
+            height: 20px;
         }
     </style>
 </head>
@@ -127,6 +151,13 @@
         <p>Total des frais annuels (THB): <span id="totalFrais">499359</span></p>
         <p>Revenu net annuel (THB): <span id="revenuNet">1161391</span></p>
         <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">0</span></strong></p>
+        <div class="share-buttons">
+            <button onclick="shareWhatsApp()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="whatsapp-icon" alt="WhatsApp">
+                Partager via WhatsApp
+            </button>
+            <button onclick="generatePDF()">Générer PDF</button>
+        </div>
     </div>
 
     <script>
@@ -193,43 +224,61 @@
             const tvaCheckbox = document.getElementById('tvaCheckbox').checked;
             const provisionTravauxCheckbox = document.getElementById('provisionTravauxCheckbox').checked;
 
-            // Calculer la valeur de base sans les meubles
             const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBienBase - 1000000 : valeurBienBase;
-
-            // Calculer la TVA si cochée
             const tvaValeur = tvaCheckbox && valeurBienInput.value !== "" ? Math.round(baseValeurBienCalc * 0.07) : 0;
             document.getElementById('tvaValeur').value = tvaValeur || "";
 
-            // Ajuster la valeur du bien pour inclure TVA et meublé si applicable
             const valeurBienAjustee = baseValeurBienCalc + (tvaCheckbox ? tvaValeur : 0) + (meuble ? 1000000 : 0);
-
-            // Jours occupés
             const joursOccupes = Math.round(365 * (tauxOccupation / 100));
             document.getElementById('joursOccupes').textContent = joursOccupes;
-
-            // Revenu brut
             const revenuBrut = joursOccupes * coutNuitee;
             document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
-
-            // Frais de gestion
             const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
-
-            // Provision pour travaux
             const provisionTravaux = provisionTravauxCheckbox ? revenuBrut * 0.01 : 0;
             document.getElementById('provisionTravauxValeur').value = provisionTravauxCheckbox ? Math.round(provisionTravaux) : "";
-
-            // Total des frais annuels (TVA exclue)
             const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + 
                               (provisionTravauxCheckbox ? provisionTravaux : 0);
             document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
-
-            // Revenu net
             const revenuNet = revenuBrut - totalFrais;
             document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
-
-            // Taux de rentabilité basé sur la valeur ajustée
             const tauxRentabilite = valeurBienAjustee > 0 ? (revenuNet / valeurBienAjustee) * 100 : 0;
             document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
+        }
+
+        function getResultsText() {
+            const joursOccupes = document.getElementById('joursOccupes').textContent;
+            const revenuBrut = document.getElementById('revenuBrut').textContent;
+            const totalFrais = document.getElementById('totalFrais').textContent;
+            const revenuNet = document.getElementById('revenuNet').textContent;
+            const tauxRentabilite = document.getElementById('tauxRentabilite').textContent;
+
+            return `Résultats du Calcul de Rentabilité:
+Jours occupés: ${joursOccupes}
+Revenu brut annuel (THB): ${revenuBrut}
+Total des frais annuels (THB): ${totalFrais}
+Revenu net annuel (THB): ${revenuNet}
+Taux de rentabilité: ${tauxRentabilite}%`;
+        }
+
+        function shareWhatsApp() {
+            const text = encodeURIComponent(getResultsText());
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${text}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf; // Accès correct à jsPDF
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text("Calcul de Rentabilité", 20, 20);
+            doc.setFontSize(12);
+            const resultsText = getResultsText().split('\n');
+            let y = 30;
+            resultsText.forEach(line => {
+                doc.text(line, 20, y);
+                y += 10;
+            });
+            doc.save('rentabilite.pdf');
         }
 
         updateCalculations();
