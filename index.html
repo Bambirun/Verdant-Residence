@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcul de Rentabilité</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -79,6 +77,11 @@
         .share-buttons button:hover {
             background-color: #45a049;
         }
+        @media print {
+            .share-buttons {
+                display: none; /* Masquer le bouton lors de l'impression */
+            }
+        }
     </style>
 </head>
 <body>
@@ -119,167 +122,4 @@
         </div>
         <div class="input-container">
             <label>Lease (THB):</label>
-            <input type="number" id="leaseNumber" value="78276" min="0" oninput="updateCalculations()">
-        </div>
-        <div class="input-container">
-            <label>Assurance (THB):</label>
-            <input type="number" id="assuranceNumber" value="9600" min="0" oninput="updateCalculations()">
-        </div>
-        <div class="input-container">
-            <label>Frais de gestion (%):</label>
-            <input type="range" id="fraisGestionRange" min="0" max="50" value="20" oninput="updateFromRange('fraisGestion')">
-            <input type="number" id="fraisGestionNumber" value="20" min="0" max="50" oninput="updateFromNumber('fraisGestion')">
-        </div>
-        <div class="input-container">
-            <label>Laundry (THB):</label>
-            <input type="number" id="laundryNumber" value="18000" min="0" oninput="updateCalculations()">
-        </div>
-        <div class="input-container">
-            <label>Provision pour travaux d'entretien (1% revenu brut):</label>
-            <input type="checkbox" id="provisionTravauxCheckbox" onchange="updateCalculations()">
-            <input type="number" id="provisionTravauxValeur" readonly>
-        </div>
-    </div>
-
-    <div class="section results">
-        <h2>Résultats</h2>
-        <p>Jours occupés: <span id="joursOccupes">237</span></p>
-        <p>Revenu brut annuel (THB): <span id="revenuBrut">16607500</span></p>
-        <p>Total des frais annuels (THB): <span id="totalFrais">499359</span></p>
-        <p>Revenu net annuel (THB): <span id="revenuNet">1161391</span></p>
-        <p><strong>Taux de rentabilité (%): <span id="tauxRentabilite">0</span></strong></p>
-        <div class="share-buttons">
-            <button onclick="generatePDF()">PDF</button>
-        </div>
-    </div>
-
-    <script>
-        let baseValeurBien = 0;
-
-        window.onload = function() {
-            document.getElementById('valeurBienNumber').value = "";
-            document.getElementById('meubleCheckbox').checked = false;
-            document.getElementById('tvaCheckbox').checked = false;
-            document.getElementById('provisionTravauxCheckbox').checked = false;
-            updateCalculations();
-        };
-
-        function updateFromRange(variable) {
-            const range = document.getElementById(`${variable}Range`);
-            const number = document.getElementById(`${variable}Number`);
-            number.value = range.value;
-            updateCalculations();
-        }
-
-        function updateFromNumber(variable) {
-            const range = document.getElementById(`${variable}Range`);
-            const number = document.getElementById(`${variable}Number`);
-            let value = parseFloat(number.value);
-            if (isNaN(value) || value < parseFloat(range.min)) {
-                value = parseFloat(range.min);
-                number.value = value;
-            } else if (value > parseFloat(range.max)) {
-                value = parseFloat(range.max);
-                number.value = value;
-            }
-            range.value = value;
-            updateCalculations();
-        }
-
-        function toggleFurniture() {
-            const valeurBienInput = document.getElementById('valeurBienNumber');
-            const meubleCheckbox = document.getElementById('meubleCheckbox');
-            const currentValue = parseFloat(valeurBienInput.value) || 0;
-
-            if (valeurBienInput.value !== "") {
-                if (meubleCheckbox.checked) {
-                    baseValeurBien = currentValue;
-                    valeurBienInput.value = baseValeurBien + 1000000;
-                } else {
-                    valeurBienInput.value = baseValeurBien;
-                }
-            }
-            updateCalculations();
-        }
-
-        function updateCalculations() {
-            const valeurBienInput = document.getElementById('valeurBienNumber');
-            const valeurBienBase = parseFloat(valeurBienInput.value) || 0;
-            const tauxOccupation = parseFloat(document.getElementById('tauxOccupationNumber').value) || 0;
-            const coutNuitee = parseFloat(document.getElementById('coutNuiteeNumber').value) || 0;
-            const entretien = parseFloat(document.getElementById('entretienNumber').value) || 0;
-            const avocat = parseFloat(document.getElementById('avocatNumber').value) || 0;
-            const lease = parseFloat(document.getElementById('leaseNumber').value) || 0;
-            const assurance = parseFloat(document.getElementById('assuranceNumber').value) || 0;
-            const fraisGestion = parseFloat(document.getElementById('fraisGestionNumber').value) || 0;
-            const laundry = parseFloat(document.getElementById('laundryNumber').value) || 0;
-            const meuble = document.getElementById('meubleCheckbox').checked;
-            const tvaCheckbox = document.getElementById('tvaCheckbox').checked;
-            const provisionTravauxCheckbox = document.getElementById('provisionTravauxCheckbox').checked;
-
-            const baseValeurBienCalc = meuble && valeurBienInput.value !== "" ? valeurBienBase - 1000000 : valeurBienBase;
-            const tvaValeur = tvaCheckbox && valeurBienInput.value !== "" ? Math.round(baseValeurBienCalc * 0.07) : 0;
-            document.getElementById('tvaValeur').value = tvaValeur || "";
-
-            const valeurBienAjustee = baseValeurBienCalc + (tvaCheckbox ? tvaValeur : 0) + (meuble ? 1000000 : 0);
-            const joursOccupes = Math.round(365 * (tauxOccupation / 100));
-            document.getElementById('joursOccupes').textContent = joursOccupes;
-            const revenuBrut = joursOccupes * coutNuitee;
-            document.getElementById('revenuBrut').textContent = Math.round(revenuBrut).toLocaleString();
-            const fraisGestionValeur = (fraisGestion / 100) * revenuBrut;
-            const provisionTravaux = provisionTravauxCheckbox ? revenuBrut * 0.01 : 0;
-            document.getElementById('provisionTravauxValeur').value = provisionTravauxCheckbox ? Math.round(provisionTravaux) : "";
-            const totalFrais = entretien + avocat + lease + assurance + fraisGestionValeur + laundry + 
-                              (provisionTravauxCheckbox ? provisionTravaux : 0);
-            document.getElementById('totalFrais').textContent = Math.round(totalFrais).toLocaleString();
-            const revenuNet = revenuBrut - totalFrais;
-            document.getElementById('revenuNet').textContent = Math.round(revenuNet).toLocaleString();
-            const tauxRentabilite = valeurBienAjustee > 0 ? (revenuNet / valeurBienAjustee) * 100 : 0;
-            document.getElementById('tauxRentabilite').textContent = tauxRentabilite.toFixed(1);
-        }
-
-        function capturePageToPDF(callback) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            html2canvas(document.body, { 
-                scale: 2, // Résolution augmentée pour la clarté
-                useCORS: true,
-                scrollX: 0,
-                scrollY: -window.scrollY // Capture tout, même hors écran
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgProps = doc.getImageProperties(imgData);
-                const pdfWidth = doc.internal.pageSize.getWidth(); // 210 mm
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-                // Si la hauteur dépasse une page A4 (297 mm), ajouter des pages
-                if (pdfHeight > 297) {
-                    const ratio = 297 / pdfHeight;
-                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight * ratio);
-                    let remainingHeight = pdfHeight - 297;
-                    let yOffset = 297;
-
-                    while (remainingHeight > 0) {
-                        doc.addPage();
-                        doc.addImage(imgData, 'PNG', 0, -yOffset, pdfWidth, pdfHeight);
-                        remainingHeight -= 297;
-                        yOffset += 297;
-                    }
-                } else {
-                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                }
-
-                callback(doc);
-            });
-        }
-
-        function generatePDF() {
-            capturePageToPDF((doc) => {
-                doc.save('rentabilite.pdf');
-            });
-        }
-
-        updateCalculations();
-    </script>
-</body>
-</html>
+            <input type="number" id="leaseNumber" value="78276" min="0" oninput="updateCalcul
